@@ -18,6 +18,7 @@ Control your Chauvet Mini Kinta LED light via USB-DMX interface from your Mac.
    ```bash
    python3 controller.py
    ```
+   The scripts find the USB-DMX adapter on their own. To pick a port yourself, see [Choosing the serial port](#-choosing-the-serial-port).
 
 ## 🎛️ Controller Usage
 
@@ -48,12 +49,43 @@ Enter choice: q      # Quit
 - **`controller.py`** - Main interactive controller (use this!)
 - **`test_connection.py`** - Test DMX connection and verify setup
 - **`troubleshoot.py`** - Debug tools for connection issues
+- **`dmx_port.py`** - Picks the serial port, shared by the three scripts above
 
 ### Documentation
 - **`README.md`** - This file
 - **`requirements.txt`** - Python dependencies
 
+## 🔌 Choosing the serial port
+
+Every script (`controller.py`, `test_connection.py`, `troubleshoot.py`) picks its port in this order:
+
+1. `--port`, e.g. `python3 controller.py --port /dev/cu.usbserial-4`
+2. The `MINIKINTA_DMX_PORT` environment variable, e.g. `MINIKINTA_DMX_PORT=/dev/cu.usbserial-4 python3 controller.py`
+3. Auto-detect: if exactly one FTDI adapter is connected, that one is used
+4. Fallback: `/dev/cu.usbserial-AQ02YN7D`, used when no FTDI adapter is detected
+
+If auto-detect finds more than one FTDI port, the script stops and lists them, so pick one with option 1 or 2. Port names such as `usbserial-4` can change when the adapter is replugged, so don't hardcode them.
+
+To list connected ports:
+```bash
+python3 -m serial.tools.list_ports -v
+```
+
 ## 🔧 Troubleshooting
+
+### Two ports for one adapter (script runs, light does nothing)
+
+If `list_ports` shows two ports with the same serial number (for example `/dev/cu.usbserial-AQ02YN7D` and `/dev/cu.usbserial-4`), two drivers are attached to the one adapter. Only one of them drives the DMX line. On one of our Macs, a third-party FTDI driver extension took the `usbserial-AQ02YN7D` name. Sending to it raised no errors, but the light never reacted. Apple's built-in driver had been moved to `usbserial-4`, and that port worked.
+
+Check which driver owns which port:
+```bash
+ioreg -r -n AppleUSBFTDI -l -w 0 | grep IOCalloutDevice
+ioreg -p IOService -w0 | grep -iE "FTDI|FT232|IOUserSerial"
+```
+
+Fix it either way:
+- Point the scripts at Apple's port with `--port` or `MINIKINTA_DMX_PORT`.
+- Or turn off the extra driver in System Settings > General > Login Items & Extensions > Driver Extensions (it's listed under its app's name, such as an FTDI USB entry), then unplug and replug the adapter. Apple's driver then owns the adapter alone and auto-detect works.
 
 ### No Response from Mini Kinta?
 
@@ -105,7 +137,7 @@ The Mini Kinta uses 3 DMX channels:
 - **DMX Protocol:** Standard DMX512 at 250,000 baud
 - **Refresh Rate:** ~44Hz continuous transmission
 - **USB Interface:** FTDI FT232R chip
-- **Device Port:** `/dev/cu.usbserial-AQ02YN7D`
+- **Device Port:** auto-detected; defaults to `/dev/cu.usbserial-AQ02YN7D` (see [Choosing the serial port](#-choosing-the-serial-port))
 
 ## 🎪 Features
 

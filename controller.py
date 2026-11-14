@@ -8,25 +8,25 @@ import serial
 import time
 import threading
 
-PORT = "/dev/cu.usbserial-AQ02YN7D"
+from dmx_port import resolve_port
 
 class MiniKintaController:
-    def __init__(self):
+    def __init__(self, port):
         self.running = False
         self.color = 0
         self.strobe = 0
         self.motor = 0
-        
+
         # Connect to DMX interface
         self.ser = serial.Serial(
-            port=PORT,
+            port=port,
             baudrate=250000,
             bytesize=8,
             parity=serial.PARITY_NONE,
             stopbits=2,
             timeout=1
         )
-        print(f"✓ Connected to DMX interface: {PORT}")
+        print(f"✓ Connected to DMX interface: {port}")
         
     def send_dmx_frame(self):
         """Send a single DMX frame"""
@@ -295,8 +295,9 @@ def main():
     print("🎪 Mini Kinta DMX Controller")
     print("============================")
     
+    port = resolve_port()
     try:
-        controller = MiniKintaController()
+        controller = MiniKintaController(port)
         controller.start()
     except Exception as e:
         print(f"❌ Error: {e}")

@@ -6,7 +6,7 @@ Mini Kinta specific DMX test based on manual specifications
 import serial
 import time
 
-PORT = "/dev/cu.usbserial-AQ02YN7D"
+from dmx_port import resolve_port
 
 def mini_kinta_dmx_test():
     """Test with Mini Kinta's exact DMX specifications"""
@@ -176,6 +176,8 @@ def test_extreme_values():
         print(f"Error: {e}")
 
 if __name__ == "__main__":
+    PORT = resolve_port()
+    print(f"Using DMX port: {PORT}")
     mini_kinta_dmx_test()
     check_dmx_cable()
     

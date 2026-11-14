@@ -6,7 +6,7 @@ DMX Debug Tool - Test communication with USB-DMX interface
 import serial
 import time
 
-PORT = "/dev/cu.usbserial-AQ02YN7D"
+from dmx_port import resolve_port
 
 def test_serial_connection():
     """Test basic serial connection"""
@@ -184,4 +184,5 @@ def main():
         test_continuous_dmx()
 
 if __name__ == "__main__":
+    PORT = resolve_port()
     main()
